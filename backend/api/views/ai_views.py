@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
-from api.models import ChatQuery, AIConversation, TaxCategory, LegalSource
+from api.models import ChatQuery, AIConversation, TaxCategory, LegalSource, FinancialDocument as Document
 from api.serializers import (
     AIQueryRequestSerializer, ChatQuerySerializer,
     AIConversationSerializer, TaxCategorySerializer,
@@ -95,6 +95,19 @@ class AIChatAPI(APIView):
         # Get relevant legal sources
         legal_sources = self.get_relevant_sources(query_text)
         
+        # Get relevant user documents for context
+        try:
+            user_docs = Document.objects.filter(user=user).order_by('-created_at')[:3]
+            if user_docs.exists():
+                docs_summary = "User's Recent Documents:\n"
+                for doc in user_docs:
+                    docs_summary += f"- {doc.original_filename} ({doc.document_type})\n"
+                    if doc.analysis_results:
+                        docs_summary += f"  Analysis: {str(doc.analysis_results)[:1000]}...\n"
+                context['user_documents'] = docs_summary
+        except Exception as e:
+            print(f"Error fetching user docs: {e}")
+
         # Generate AI response using Gemini
         if hasattr(self.gemini_client, 'is_configured') and not self.gemini_client.is_configured:
             response_text = self.gemini_client.get_fallback_response()

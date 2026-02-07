@@ -26,3 +26,4 @@ from .payment_views import (
     PaystackWebhookAPI, SubscriptionPlansAPI,
     PaymentHistoryAPI
 )
+from .dashboard_views import DashboardAPI

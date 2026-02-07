@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 // Pages
 import MavenLandingPage from './pages/Landing';
@@ -15,7 +15,7 @@ import NotFound from './pages/NotFound'; // Import the NotFound page
 
 export default function App() {
   return (
-    <BrowserRouter>
+    
       <Routes>
         <Route path='/' element={<MavenLandingPage />} />
         <Route path='/login' element={<MavenLoginScreen />} />
@@ -24,9 +24,9 @@ export default function App() {
         <Route path='/chat' element={<MavenAIChat />} />
         <Route path='/docs' element={<MavenDocumentManager />} />
         <Route path='/partner' element={<MavenPartnerDirectory />} />
-        <Route path='/pricing' element={<MavenPricing />} />
         <Route path='/settings' element={<MavenSettings />} />
+        <Route path="*" element={<NotFound />} /> {/* Catch-all route for 404 */}
       </Routes>
-    </BrowserRouter>
+    
   )
 }

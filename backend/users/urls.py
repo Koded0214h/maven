@@ -2,7 +2,7 @@
 from django.urls import path
 from .views import (
     RegisterAPI, LoginAPI, UserAPI,
-    ProfileUpdateAPI
+    ProfileUpdateAPI, SettingsAPIView # Import SettingsAPIView
 )
 
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
     path('login/', LoginAPI.as_view(), name='login'),
     path('user/', UserAPI.as_view(), name='user'),
     path('profile/', ProfileUpdateAPI.as_view(), name='profile-update'),
+    path('settings/', SettingsAPIView.as_view(), name='user-settings'), # Add the new settings URL
 ]

@@ -1,35 +1,30 @@
 # api/urls.py
 from django.urls import path, include
-from .views.ai_views import (
+from .views import (
     AIChatAPI, ConversationListAPI, 
     ConversationDetailAPI, QueryHistoryAPI,
     QueryFeedbackAPI, TaxCategoriesAPI,
-    LegalSourcesAPI, TaxComplianceCheckAPI
-)
-from .views.voice_views import (
+    LegalSourcesAPI, TaxComplianceCheckAPI,
     VoiceCallScheduleAPI, VoiceCallListAPI, 
     VoiceCallDetailAPI, VoiceCallCancelAPI,
-    VoiceCallAvailabilityAPI
-)
-from .views.partner_views import (
+    VoiceCallAvailabilityAPI,
     PartnerFirmListAPI, PartnerFirmDetailAPI,
     LeadReferralCreateAPI, LeadReferralListAPI,
-    PartnerSignupRequestAPI, PartnerCommissionAPI
-)
-from .views.document_views import (
+    PartnerSignupRequestAPI, PartnerCommissionAPI,
     DocumentUploadAPI, DocumentListAPI,
     DocumentDetailAPI, DocumentAnalysisAPI,
     DocumentExportAPI, DocumentStatsAPI,
     DocumentPreviewAPI, DocumentBulkDeleteAPI,
-    DocumentProcessingStatusAPI, DocumentTemplateAPI
-)
-from .views.payment_views import (
+    DocumentProcessingStatusAPI, DocumentTemplateAPI,
     InitializePaymentAPI, VerifyPaymentAPI,
     PaystackWebhookAPI, SubscriptionPlansAPI,
-    PaymentHistoryAPI
+    PaymentHistoryAPI, DashboardAPI
 )
 
 urlpatterns = [
+    # Dashboard endpoint
+    path('dashboard/', DashboardAPI.as_view(), name='dashboard'),
+
     # AI Chat endpoints
     path('ai/chat/', AIChatAPI.as_view(), name='ai-chat'),
     path('ai/conversations/', ConversationListAPI.as_view(), name='conversation-list'),

@@ -1,57 +1,77 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  ShieldCheck, Search, MapPin, ChevronDown, Star, Calendar,
+  ShieldCheck, MapPin, ChevronDown, Star, Calendar,
   FileText, Globe, Mail, Share2, LogIn, UserPlus,
   Building2, Users, DollarSign, PieChart, TrendingUp,
   Briefcase, FileCheck, Calculator, Landmark, Home,
-  ChevronRight, CheckCircle
+  ChevronRight, CheckCircle, Search
 } from 'lucide-react';
+import { partnerService } from '../services/api'; // Import the new partner service
+import Header from '../components/Header'; // Import the new Header component
+
+// List of Nigerian states for the filter, including 'All Regions'
+const NIGERIAN_STATES = [
+  'All Regions', 'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno', 'Cross River',
+  'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi',
+  'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers',
+  'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Abuja (FCT)'
+];
 
 const MavenPartnerDirectory = () => {
+  const [partners, setPartners] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedState, setSelectedState] = useState('All Regions');
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = {};
+        if (searchTerm) {
+          params.search = searchTerm;
+        }
+        if (selectedState && selectedState !== 'All Regions') {
+          params.state = selectedState;
+        }
+        
+        const response = await partnerService.getPartnerFirms(params);
+        setPartners(response.results); // Assuming API returns { results: [], count: ... }
+      } catch (err) {
+        console.error('Failed to fetch partners:', err);
+        setError('Failed to load partners. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const handler = setTimeout(() => {
+      fetchPartners();
+    }, 500); // Debounce search input
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm, selectedState]); // Re-fetch when search term or selected state changes
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleStateChange = (state) => {
+    setSelectedState(state);
+    setShowStateDropdown(false); // Close dropdown after selection
+  };
+
   return (
     <div className="light">
       <div className="bg-background-light dark:bg-background-dark font-sans min-h-screen text-custom-text-primary dark:text-white">
         <div className="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
           <div className="layout-container flex h-full grow flex-col">
-            {/* Top Navigation Bar */}
-            <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-primary-500/10 bg-white dark:bg-background-dark px-10 py-3 sticky top-0 z-50">
-              <div className="flex items-center gap-4 text-primary-500 dark:text-white">
-                <div className="size-6">
-                  <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
-                    <path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="currentColor"></path>
-                  </svg>
-                </div>
-                <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">
-                  Maven Partner Directory
-                </h2>
-              </div>
-              <div className="flex flex-1 justify-end gap-8">
-                <div className="flex items-center gap-9">
-                  <a className="text-sm font-medium leading-normal hover:text-primary-500/70 transition-colors" href="#">
-                    Directory
-                  </a>
-                  <a className="text-sm font-medium leading-normal hover:text-primary-500/70 transition-colors" href="#">
-                    Services
-                  </a>
-                  <a className="text-sm font-medium leading-normal hover:text-primary-500/70 transition-colors" href="#">
-                    About Us
-                  </a>
-                  <a className="text-sm font-medium leading-normal hover:text-primary-500/70 transition-colors" href="#">
-                    Pricing
-                  </a>
-                </div>
-                <div className="flex gap-2">
-                  <button className="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary-500 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary-500/90 transition-all">
-                    <LogIn className="w-4 h-4 mr-1" />
-                    <span className="truncate">Sign In</span>
-                  </button>
-                  <button className="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary-500/10 text-primary-500 dark:text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary-500/20 transition-all">
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    <span className="truncate">Join as Partner</span>
-                  </button>
-                </div>
-              </div>
-            </header>
+            <Header />
 
             <main className="flex flex-1 justify-center py-10 px-4 md:px-10">
               <div className="layout-content-container flex flex-col max-w-[1200px] flex-1">
@@ -78,335 +98,147 @@ const MavenPartnerDirectory = () => {
                         <input
                           className="form-input flex w-full min-w-0 flex-1 resize-none border-none bg-primary-500/5 focus:outline-0 focus:ring-0 text-base font-normal leading-normal px-3 placeholder:text-primary-500/40"
                           placeholder="Search by firm name, service, or keyword (e.g. Audit, VAT Filing)"
+                          value={searchTerm}
+                          onChange={handleSearchChange}
                         />
                       </div>
                     </label>
                   </div>
                   <div className="flex gap-3 items-center">
                     <div className="relative min-w-[200px]">
-                      <button className="flex w-full h-12 items-center justify-between gap-x-2 rounded-lg border border-primary-500/10 bg-primary-500/5 px-4 text-sm font-medium hover:border-primary-500 transition-all">
+                      <button
+                        className="flex w-full h-12 items-center justify-between gap-x-2 rounded-lg border border-primary-500/10 bg-primary-500/5 px-4 text-sm font-medium hover:border-primary-500 transition-all"
+                        onClick={() => setShowStateDropdown(!showStateDropdown)}
+                      >
                         <div className="flex items-center gap-2">
                           <MapPin className="w-5 h-5 text-primary-500/60" />
-                          <span className="text-primary-500 dark:text-white">All States</span>
+                          <span className="text-primary-500 dark:text-white">{selectedState}</span>
                         </div>
                         <ChevronDown className="w-5 h-5" />
                       </button>
+                      {showStateDropdown && (
+                        <div className="absolute right-0 mt-2 w-full rounded-md shadow-lg bg-white dark:bg-background-dark ring-1 ring-black ring-opacity-5 z-10 max-h-60 overflow-y-auto">
+                          <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="state-options-menu">
+                            {NIGERIAN_STATES.map((state) => (
+                              <a
+                                key={state}
+                                href="#"
+                                className="block px-4 py-2 text-sm text-primary-500 dark:text-white hover:bg-primary-500/5"
+                                onClick={(e) => { e.preventDefault(); handleStateChange(state); }}
+                                role="menuitem"
+                              >
+                                {state}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* State Quick Filter Chips */}
                 <div className="flex flex-wrap gap-2 mb-10 overflow-x-auto pb-2 no-scrollbar">
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary-500 text-white px-5 text-sm font-semibold">
-                    All Regions
-                  </button>
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5 px-5 text-sm font-medium transition-all">
-                    Lagos
-                  </button>
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5 px-5 text-sm font-medium transition-all">
-                    Abuja (FCT)
-                  </button>
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5 px-5 text-sm font-medium transition-all">
-                    Rivers
-                  </button>
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5 px-5 text-sm font-medium transition-all">
-                    Kano
-                  </button>
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5 px-5 text-sm font-medium transition-all">
-                    Oyo
-                  </button>
-                  <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5 px-5 text-sm font-medium transition-all">
-                    Ogun
-                  </button>
+                  {NIGERIAN_STATES.map((state) => (
+                    <button
+                      key={state}
+                      className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-5 text-sm font-semibold transition-all
+                        ${selectedState === state
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-white dark:bg-background-dark border border-primary-500/10 hover:border-primary-500 hover:bg-primary-500/5'
+                        }`}
+                      onClick={() => handleStateChange(state)}
+                    >
+                      {state}
+                    </button>
+                  ))}
                 </div>
+
+                {isLoading && (
+                  <div className="text-center text-lg text-primary-500 dark:text-white my-8">
+                    Loading partners...
+                  </div>
+                )}
+
+                {error && (
+                  <div className="text-center text-lg text-red-500 dark:text-red-400 my-8">
+                    {error}
+                  </div>
+                )}
+
+                {!isLoading && !error && partners.length === 0 && (
+                  <div className="text-center text-lg text-primary-500/60 dark:text-white/60 my-8">
+                    No partners found matching your criteria.
+                  </div>
+                )}
 
                 {/* Partner Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Partner Card 1 */}
-                  <div className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
-                    <div className="relative p-6 pb-0">
-                      <div
-                        className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
-                        style={{
-                          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDZZKfWtxv7RpGOVCuZatOUCbePgI9fzNFY0HOEroakL4HDlaVdkMXtvHqT0OH4lCvvj_sZa0S8auwr99TTVF42fXScLiw0hogPC0PNztGVM6b3KGdtz_N17gmCXS5nBAEh4TTgjgEgFS5_R27MtgK0avKmu2QQzoP1caBa6hTwIGl6nnIUe21wfdpyYRxlHtUoG0um7_emZTQQWfQqyhvxKpUdHnezlykxhy-Xe4JGQYi--wlo1JbfAnguI2rHQlaylIVmuSwO534")',
-                        }}
-                        alt="Office building of a tax consultancy firm in Lagos"
-                      ></div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
-                              Olukoya & Co.
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
+                {!isLoading && !error && partners.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {partners.map((partner) => (
+                      <div key={partner.id} className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
+                        <div className="relative p-6 pb-0">
+                          <div
+                            className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
+                            style={{
+                              backgroundImage: `url("${partner.image_url || 'https://via.placeholder.com/400x200?text=Partner+Image'}")`,
+                            }}
+                            alt={`Office building of ${partner.name}`}
+                          ></div>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
+                                  {partner.name}
+                                </h3>
+                                {partner.is_verified && (
+                                  <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
+                                {partner.rating > 0 && (
+                                  <>
+                                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                                    <span>{partner.rating.toFixed(1)}</span>
+                                    <span className="mx-1">•</span>
+                                  </>
+                                )}
+                                <span>
+                                  {partner.states_covered && partner.states_covered.length > 0
+                                    ? partner.states_covered.join(', ')
+                                    : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>4.9</span>
-                            <span className="mx-1">•</span>
-                            <span>Lagos State</span>
+                        </div>
+                        <div className="p-6 pt-4 flex-1">
+                          <div className="flex flex-wrap gap-1.5 mb-6">
+                            {partner.services && partner.services.length > 0 ? (
+                              partner.services.slice(0, 3).map((service, index) => (
+                                <span key={index} className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
+                                  {service}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
+                                General Tax Services
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
+                              Book Consultation
+                            </button>
+                            <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
+                              View Profile
+                            </button>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-6">
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Corporate Tax
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          VAT Filing
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Audit
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
-                          Book Consultation
-                        </button>
-                        <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
-                          View Profile
-                        </button>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-
-                  {/* Partner Card 2 */}
-                  <div className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
-                    <div className="relative p-6 pb-0">
-                      <div
-                        className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
-                        style={{
-                          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuD79tdksUYKDS29qMI_UQ74Q8sqPl3Z2nH3rsb8XPwq1rrkyJwcPO93BmcJ52pdm1lcetzvEEdivGfwnBpLXf9bwXKYs0wGmErC6QmqInaIy671HNuGWxxLbHpSO7YG_zmIA476Q3TUZbuv7Oza3tAOR7oI7o0XDMhAkhTcZfobbI-R8l_Lg0MRG5iWakdMIz1jGhtj2sNlTcujM8zW5ZseBv9Frw9i8tzXr0isGzRxVP_XWcYihqB6CL0TniK4-tjHx8bbi4Kqdkc")',
-                        }}
-                        alt="Modern professional workspace interior in Abuja"
-                      ></div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
-                              Ade & Partners
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
-                          </div>
-                          <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>4.7</span>
-                            <span className="mx-1">•</span>
-                            <span>Abuja (FCT)</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-6">
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          PIT Management
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Advisory
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
-                          Book Consultation
-                        </button>
-                        <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
-                          View Profile
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Partner Card 3 */}
-                  <div className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
-                    <div className="relative p-6 pb-0">
-                      <div
-                        className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
-                        style={{
-                          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuB0usHujrijBRiq9MQtbKieGJR_2LpbPAz5ECLaIwdKg345_Z15Czmc-Y8efqgJBENbCY_-cp-9GOZO1vCpxHCQ3-jRZArAYiraS2ay3dcClWk94yocHf8NwdPZJWGmjVJwaYml5psxHORa_LNziDxA6fldaJp6tf7xD-fDp5_R8yO4Gf1z3XGOrLkZXPUReglX8Vrnkdlbk56WGn756tRvmn6_I0pqskfjjrqLwTXvqGOjf9XipW9KW7WztjXT3HPbS_RKIiAwTUc")',
-                        }}
-                        alt="Conference room setting in Kano tax office"
-                      ></div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
-                              Northern Tax Consultants
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
-                          </div>
-                          <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>4.8</span>
-                            <span className="mx-1">•</span>
-                            <span>Kano State</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-6">
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          SME Tax
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Corporate Filing
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
-                          Book Consultation
-                        </button>
-                        <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
-                          View Profile
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Partner Card 4 */}
-                  <div className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
-                    <div className="relative p-6 pb-0">
-                      <div
-                        className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
-                        style={{
-                          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAvMZ8VwS_cTQ31JZ34gHuCKXmQZdjYRsR-2P3J9Ifsn87EIxPcQyYATB_H-Bc82bWOXTH2kM5lF6hRje32JC7UMl7Dfe-PyR8T8PfActWgx3iR1_jBx38zz4EzsXsEwODrCa_DZfxkxI8HaZ3od0cpJ9XUkXA0EJBshOmwDW9nnIkY8Q8GtLTF02qBIj4bTHO3EFRKZHR1c1UnBfq103l5ZoatXlK7PfeXzVuBThQ-OXpfBAshM4fN_fHfayUFwj4rLbkMFw4fMGc")',
-                        }}
-                        alt="Executive board room for financial services"
-                      ></div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
-                              Lagos Audit Group
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
-                          </div>
-                          <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>4.6</span>
-                            <span className="mx-1">•</span>
-                            <span>Lagos State</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-6">
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Statutory Audit
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Tax Planning
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
-                          Book Consultation
-                        </button>
-                        <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
-                          View Profile
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Partner Card 5 */}
-                  <div className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
-                    <div className="relative p-6 pb-0">
-                      <div
-                        className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
-                        style={{
-                          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAdnkUStnyq70pkP7equs0XCjeI9XsLWpm6qIScJzyrh6fl27de7mrhJCAKKEH0dGl2k_TNO2Sz57GMYDaxNAVeLf0K0YcCfPTOAnU4b_JqVK6vSEwxGJfLOQm4X0CSEveNKF5oMdEK2I0eilWV5JcX_9sC6yA5NZ7srzrl6HtF16B45EIrFwScNaLv08K1gFscXxrf520n3c0LwBpija_x1FiV-KBuwO6SyfEgwdMbqmkuPcBqwSNzZFQN2_GBtmipygnq7odacd8")',
-                        }}
-                        alt="Office lobby in Port Harcourt"
-                      ></div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
-                              Delta Financial
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
-                          </div>
-                          <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>4.5</span>
-                            <span className="mx-1">•</span>
-                            <span>Delta State</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-6">
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Oil & Gas Tax
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Consultancy
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
-                          Book Consultation
-                        </button>
-                        <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
-                          View Profile
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Partner Card 6 */}
-                  <div className="group bg-white dark:bg-background-dark rounded-xl border border-primary-500/5 shadow-sm hover:shadow-md hover:border-primary-500/20 transition-all flex flex-col">
-                    <div className="relative p-6 pb-0">
-                      <div
-                        className="w-full h-48 bg-center bg-no-repeat bg-cover rounded-lg mb-4"
-                        style={{
-                          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuA1KRnknuIpkGzcymm6Dil6-nscrXmb2hXriZqfzEr2_q5Y3xpcWL7iqF7PM-cetUP-OPI_GV33FCB-gq5z-De8EJtVBlQpYwcjAxDo97_2nFiDHz3n_DFX2Cs5iI0C3h-02IXKbSD1_JBxZkGbc3pB3JmyQH_OY8GF3ZHRL9cSCyXjOMBdoAiXZvaX5jwPwK1i9C3wN0-0FdFScwxgvKm-K8vBTJuYb-wu6swaH2Ftn67bdzED4hOuCMVBhn992tYOwzOnlznyOcs")',
-                        }}
-                        alt="Modern high-rise office architecture"
-                      ></div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <h3 className="text-lg font-bold text-primary-500 dark:text-white leading-none">
-                              Ibadan Tax Hub
-                            </h3>
-                            <CheckCircle className="w-5 h-5 text-green-500 fill-current" title="Verified Partner" />
-                          </div>
-                          <div className="flex items-center gap-1 text-primary-500/60 dark:text-white/60 text-sm font-medium">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span>4.9</span>
-                            <span className="mx-1">•</span>
-                            <span>Oyo State</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 pt-4 flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-6">
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          Personal Income
-                        </span>
-                        <span className="px-2.5 py-1 bg-primary-500/5 text-primary-500/80 dark:text-white/80 text-[11px] font-bold uppercase tracking-wider rounded">
-                          WHT Filing
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-primary-500 text-white text-xs font-bold rounded-lg hover:bg-primary-500/90 transition-all">
-                          Book Consultation
-                        </button>
-                        <button className="flex-1 h-10 border border-primary-500/10 text-primary-500 dark:text-white text-xs font-bold rounded-lg hover:bg-primary-500/5 transition-all">
-                          View Profile
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </main>
 
